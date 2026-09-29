@@ -5,7 +5,7 @@ import requests
 BASE = "https://api.gateio.ws/api/v4/futures/usdt"
 
 GROWTH_MIN = 50.0
-ATH_RATIO_MAX = 2.0
+ATH_RATIO_MAX = 3.0
 
 
 def get_json(url, params=None):
