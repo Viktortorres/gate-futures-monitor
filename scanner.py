@@ -1,3 +1,4 @@
+import os
 import time
 import requests
 
@@ -49,6 +50,28 @@ def get_ath(contract):
     return max(highs) if highs else None
 
 
+def send_ntfy(message):
+    topic = os.environ.get("NTFY_TOPIC")
+
+    if not topic:
+        print("NTFY_TOPIC не задан")
+        return
+
+    r = requests.post(
+        f"https://ntfy.sh/{topic}",
+        data=message.encode("utf-8"),
+        headers={
+            "Title": "Gate Futures",
+            "Priority": "high",
+            "Tags": "chart_with_upwards_trend",
+        },
+        timeout=30,
+    )
+
+    r.raise_for_status()
+    print("Push-уведомление отправлено")
+
+
 def main():
     tickers = get_json(f"{BASE}/tickers")
 
@@ -67,7 +90,10 @@ def main():
         except (KeyError, TypeError, ValueError):
             pass
 
-    print(f"Фьючерсов с ростом > {GROWTH_MIN}%: {len(candidates)}")
+    print(
+        f"Фьючерсов с ростом > {GROWTH_MIN}%: "
+        f"{len(candidates)}"
+    )
 
     signals = []
 
@@ -121,6 +147,16 @@ def main():
         print(f'Цена: {s["price"]}')
         print(f'ATH: {s["ath"]}')
         print(f'Ниже ATH: {s["below_ath"]:.2f}%')
+
+        message = (
+            f'🔥 {s["contract"]}\n'
+            f'Рост за 24ч: +{s["growth"]:.2f}%\n'
+            f'Цена: {s["price"]}\n'
+            f'ATH: {s["ath"]}\n'
+            f'Ниже ATH: {s["below_ath"]:.2f}%'
+        )
+
+        send_ntfy(message)
 
 
 if __name__ == "__main__":
